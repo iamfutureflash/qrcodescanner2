@@ -1,17 +1,27 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
+import {
+  Html5Qrcode,
+  Html5QrcodeScanner,
+  Html5QrcodeSupportedFormats,
+} from "html5-qrcode";
 import {
   Camera,
+  CheckCircle,
+  Copy,
+  RefreshCw,
+  Scan,
   Upload,
   X,
-  Scan,
-  Copy,
-  CheckCircle,
-  RefreshCw,
 } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 import "../App.css";
 
-function HtmlQRCode() {
+function HtmlQRCode({
+  onSuccess,
+  onError,
+}: {
+  onSuccess: (value: string | null) => void;
+  onError: (value: unknown) => void;
+}) {
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -19,6 +29,7 @@ function HtmlQRCode() {
 
   const success = (result: string) => {
     setScanResult(result);
+    onSuccess(result);
     setIsScanning(false);
     if (scannerRef.current) {
       scannerRef.current.clear();
@@ -28,6 +39,7 @@ function HtmlQRCode() {
 
   const error = (err: unknown) => {
     console.warn(err);
+    onError(err);
   };
 
   // Initialize Scanner
@@ -42,6 +54,9 @@ function HtmlQRCode() {
             height: 250,
           },
           fps: 5,
+          showZoomSliderIfSupported: true,
+          rememberLastUsedCamera: true,
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
         },
         false,
       );
@@ -69,11 +84,13 @@ function HtmlQRCode() {
       const html5QrCode = new Html5Qrcode("reader-file");
       const result = await html5QrCode.scanFile(file, true);
       setScanResult(result);
+      onSuccess(result);
       html5QrCode.clear();
     } catch (err) {
       alert(
         "Error scanning file. Please try another image or ensure the QR code is clear.",
       );
+      onError(err);
       console.error(err);
     }
   };
@@ -87,6 +104,7 @@ function HtmlQRCode() {
 
   const resetScan = () => {
     setScanResult(null);
+    onSuccess(null);
     setIsScanning(false);
     setCopied(false);
   };
